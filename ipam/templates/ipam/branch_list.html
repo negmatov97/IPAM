@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Filiallar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Filiallar</h1></div>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'ipam:branch_create' %}">+ Filial</a></div>
+</div>
+{% include "ipam/_filters.html" with placeholder="Nomi, kodi, manzil yoki mas'ul shaxs" export=True %}
+<div class="card flush table-wrap">
+  <table>
+    <thead><tr><th>Filial</th><th>Hudud</th><th>Mas'ul / telefon</th><th class="right">Subnetlar</th><th class="right">Qurilmalar</th><th class="right">IP</th></tr></thead>
+    <tbody>
+      {% for b in branches %}
+      <tr>
+        <td><a href="{{ b.get_absolute_url }}">{{ b.name }}</a>{% if b.code %} <span class="tag">{{ b.code }}</span>{% endif %}<div class="location">{{ b.address }}</div></td>
+        <td>{{ b.district.region.name }}<div class="location">{{ b.district.name }}</div></td>
+        <td>{{ b.contact_person|default:"—" }}<div class="location">{{ b.phone }}</div></td>
+        <td class="right">{{ b.n_subnets }}</td>
+        <td class="right">{{ b.n_devices }}</td>
+        <td class="right">{{ b.n_ips }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="empty">Filial topilmadi.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "ipam/_pagination.html" %}
+</div>
+{% endblock %}

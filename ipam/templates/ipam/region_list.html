@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Hududlar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Hududlar</h1><p class="sub">Viloyatlar, tumanlar va ulardagi filiallar</p></div>
+  <div class="actions"><a class="btn" href="{% url 'ipam:region_create' %}">+ Viloyat</a></div>
+</div>
+<div class="card flush table-wrap">
+  <table>
+    <thead><tr><th>Viloyat</th><th>Kodi</th><th class="right">Tumanlar</th><th class="right">Filiallar</th><th class="right">IP manzillar</th></tr></thead>
+    <tbody>
+      {% for r in regions %}
+      <tr>
+        <td><a href="{{ r.get_absolute_url }}">{{ r.name }}</a></td>
+        <td class="mono muted">{{ r.code }}</td>
+        <td class="right">{{ r.n_districts }}</td>
+        <td class="right">{{ r.n_branches }}</td>
+        <td class="right">{{ r.n_ips }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty">Viloyatlar yo'q.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% if logs %}
+<div class="table-wrap">
+<table class="audit">
+  <thead><tr><th>Vaqt</th>{% if not compact %}<th>Foydalanuvchi</th>{% endif %}<th>Harakat</th><th>Obyekt</th><th>O'zgarishlar</th>{% if not compact %}<th>IP</th>{% endif %}</tr></thead>
+  <tbody>
+    {% for log in logs %}
+    <tr>
+      <td class="nowrap small">{{ log.timestamp|date:"d.m.Y" }}<div class="mono">{{ log.timestamp|date:"H:i:s" }}</div></td>
+      {% if not compact %}<td class="nowrap">{% if log.user_id %}<a href="?user={{ log.user_id }}">{{ log.username }}</a>{% else %}{{ log.username|default:"—" }}{% endif %}</td>{% endif %}
+      <td class="nowrap"><span class="badge action-{{ log.action }}">{{ log.get_action_display }}</span></td>
+      <td>{% if log.model_name %}<div class="location">{{ log.model_name }}</div>{% endif %}{{ log.object_repr }}</td>
+      <td class="small">
+        {% for field, values in log.changes.items %}
+          <div><span class="muted">{{ field }}:</span>
+            {% if log.action == "update" or log.action == "access" %}<s class="muted">{{ values.0|default:"—" }}</s> → <strong>{{ values.1|default:"—" }}</strong>
+            {% elif log.action == "delete" %}{{ values.0 }}
+            {% else %}{{ values.1 }}{% endif %}
+          </div>
+        {% endfor %}
+      </td>
+      {% if not compact %}<td class="mono small">{{ log.ip_address|default:"" }}</td>{% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+  <p class="empty">Qaydlar yo'q.</p>
+{% endif %}

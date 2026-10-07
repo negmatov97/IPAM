@@ -1,0 +1,95 @@
+{% load static %}<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}IPAM{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'ipam/style.css' %}">
+  <script src="{% static 'ipam/app.js' %}" defer></script>
+</head>
+<body>
+{% if user.is_authenticated %}
+{% with n=request.resolver_match.url_name %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">IPAM<small>IP manzillar boshqaruvi</small></div>
+    <nav>
+      <a href="{% url 'ipam:dashboard' %}" {% if n == "dashboard" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Bosh sahifa</a>
+
+      <div class="nav-title">Tuzilma</div>
+      <a href="{% url 'ipam:region_list' %}" {% if n|slice:":6" == "region" or n|slice:":8" == "district" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Hududlar</a>
+      <a href="{% url 'ipam:branch_list' %}" {% if n|slice:":6" == "branch" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        Filiallar</a>
+      <a href="{% url 'ipam:device_list' %}" {% if n|slice:":6" == "device" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Qurilmalar</a>
+
+      <div class="nav-title">Tarmoq</div>
+      <a href="{% url 'ipam:ip_list' %}" {% if n == "ip_list" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        IP manzillar</a>
+      <a href="{% url 'ipam:subnet_list' %}" {% if n|slice:":6" == "subnet" or n == "ip_create" or n == "ip_update" or n == "ip_delete" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Subnetlar</a>
+      <a href="{% url 'ipam:vlan_list' %}" {% if n|slice:":4" == "vlan" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        VLAN'lar</a>
+
+      {% if perms.ipam.view_prices or perms.ipam.view_vlanlease %}
+      <div class="nav-title">Moliya</div>
+      {% if perms.ipam.view_prices %}
+      <a href="{% url 'ipam:price_list' %}" {% if n == "price_list" or n|slice:":6" == "tariff" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+        Narxlar</a>
+      {% endif %}
+      {% if perms.ipam.view_vlanlease %}
+      <a href="{% url 'ipam:lease_list' %}" {% if n|slice:":5" == "lease" or n|slice:":7" == "payment" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        VLAN ijaralari</a>
+      {% endif %}
+      {% endif %}
+
+      {% if perms.auth.change_user and perms.auth.change_group or user.is_staff or perms.ipam.view_auditlog %}
+      <div class="nav-title">Tizim</div>
+      {% endif %}
+      {% if perms.auth.change_user and perms.auth.change_group %}
+      <a href="{% url 'ipam:access_control' %}" {% if n == "access_control" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Rollar va huquqlar</a>
+      {% endif %}
+      {% if perms.ipam.view_auditlog %}
+      <a href="{% url 'ipam:audit_list' %}" {% if n == "audit_list" %}class="active"{% endif %}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Harakatlar qaydi</a>
+      {% endif %}
+      {% if user.is_staff %}
+      <a href="{% url 'admin:index' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Admin panel</a>
+      {% endif %}
+    </nav>
+    <div class="user">
+      <span>{{ user.username }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Chiqish</button></form>
+    </div>
+  </aside>
+  <div class="content">
+    <main>
+      {% if messages %}
+        <ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endwith %}
+{% else %}
+<main>{% block login %}{% endblock %}</main>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load ipam_tags %}
+{% block title %}{{ object }} — IPAM{% endblock %}
+{% block content %}
+{% with show_prices=perms.ipam.view_prices %}
+<div class="breadcrumbs"><span><a href="{% url 'ipam:lease_list' %}">VLAN ijaralari</a></span><span>{{ object }}</span></div>
+<div class="page-head">
+  <div>
+    <h1>{{ object.tenant }}</h1>
+    <p class="sub">VLAN {{ object.vlan.vid }} ({{ object.vlan.name }}){% if object.contract_number %} · Shartnoma № {{ object.contract_number }}{% endif %}
+      {% if object.is_active %}<span class="tag tag-green">Amalda</span>{% else %}<span class="tag">Faol emas</span>{% endif %}</p>
+  </div>
+  <div class="actions">
+    {% if show_prices %}{% include "ipam/_export_buttons.html" %}{% endif %}
+    {% if perms.ipam.change_vlanlease %}<a class="btn" href="{% url 'ipam:lease_update' object.pk %}">Tahrirlash</a>{% endif %}
+    {% if perms.ipam.delete_vlanlease %}<a class="btn" href="{% url 'ipam:lease_delete' object.pk %}">O'chirish</a>{% endif %}
+  </div>
+</div>
+
+{% if show_prices %}
+<div class="stats money">
+  <div class="stat"><div class="num">{{ object.current_price|money }}</div><div class="label">Narx ({{ object.get_billing_period_display|lower }}){% if object.custom_price is not None %} · maxsus{% endif %}</div></div>
+  <div class="stat"><div class="num">{{ object.accrued_total|money }}</div><div class="label">Hisoblangan ({{ charges|length }} davr)</div></div>
+  <div class="stat"><div class="num">{{ object.paid_total|money }}</div><div class="label">To'langan</div></div>
+  <div class="stat"><div class="num {% if object.balance > 0 %}text-danger{% endif %}">{{ object.balance|money }}</div><div class="label">{% if object.balance < 0 %}Oldindan to'langan{% else %}Qarzdorlik{% endif %}</div></div>
+</div>
+{% endif %}
+
+<div class="card meta">
+  <div><span>VLAN turi</span>{{ object.vlan.vlan_type|default:"—" }}</div>
+  <div><span>Viloyat</span>{{ object.region.name }}</div>
+  <div><span>Filial</span>{% if object.branch %}<a href="{{ object.branch.get_absolute_url }}">{{ object.branch.name }}</a>{% else %}—{% endif %}</div>
+  <div><span>Tezlik</span>{{ object.bandwidth_mbps|floatformat:"-2" }} Mbit/s</div>
+  <div><span>Masofa</span>{{ object.distance_km|floatformat:"-2" }} km</div>
+  <div><span>To'lov davri</span>{{ object.get_billing_period_display }}</div>
+  <div><span>Muddat</span>{{ object.start_date|date:"d.m.Y" }} — {% if object.end_date %}{{ object.end_date|date:"d.m.Y" }}{% else %}muddatsiz{% endif %}</div>
+  {% if show_prices %}<div><span>Oylik ekvivalent</span>{{ object.monthly_equivalent|money }}</div>{% endif %}
+  {% if object.note %}<div class="wide"><span>Izoh</span>{{ object.note|linebreaksbr }}</div>{% endif %}
+</div>
+
+{% if show_prices %}
+<div class="card formula">
+  {% if object.custom_price is not None %}
+    <strong>Narx:</strong> shartnoma bo'yicha maxsus narx — {{ object.custom_price|money }} ({{ object.get_billing_period_display|lower }}).
+  {% elif calc %}
+    <strong>Hozirgi narx hisobi:</strong> {{ calc.explanation }}{% if object.billing_period == "yearly" %}; yillik: {{ calc.yearly|money }}{% endif %}
+    <div class="muted small">Tarif: {{ tariff }} — {{ tariff.rule_text }}</div>
+  {% else %}
+    <strong class="text-danger">Bu VLAN turi va viloyat uchun narx belgilanmagan.</strong>
+    {% if perms.ipam.add_tariff %}<a href="{% url 'ipam:tariff_create' %}?region={{ object.region_id }}{% if object.vlan.vlan_type_id %}&vlan_type={{ object.vlan.vlan_type_id }}{% endif %}">Narx qo'shish</a>{% endif %}
+  {% endif %}
+</div>
+
+<div class="two-col">
+  <div class="card flush">
+    <h2>Hisoblangan davrlar <span class="count">{{ charges|length }}</span></h2>
+    {% if charges %}
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Davr</th><th class="right">Summa</th><th>Hisob</th></tr></thead>
+      <tbody>
+        {% for c in charges %}
+        <tr>
+          <td class="small nowrap">{{ c.start|date:"d.m.Y" }} —<br>{{ c.end|date:"d.m.Y" }}</td>
+          <td class="right nowrap">{% if c.amount is None %}<span class="text-danger">—</span>{% else %}{{ c.amount|money }}{% endif %}</td>
+          <td class="small {% if c.amount is None %}text-danger{% else %}muted{% endif %}">{{ c.source }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}<p class="empty">Ijara hali boshlanmagan.</p>{% endif %}
+  </div>
+
+  <div class="card flush">
+    <h2>To'lovlar <span class="count">{{ payments|length }}</span></h2>
+    {% if perms.ipam.add_payment %}
+    <form method="post" action="{% url 'ipam:payment_create' object.pk %}" class="inline-form">
+      {% csrf_token %}
+      {{ payment_form.date }}
+      {{ payment_form.amount }}
+      <input type="text" name="note" placeholder="Izoh (to'lov hujjati №)" maxlength="255">
+      <button class="btn btn-primary" type="submit">+ To'lov</button>
+    </form>
+    {% endif %}
+    {% if payments %}
+    <div class="table-wrap">
+    <table>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="nowrap">{{ p.date|date:"d.m.Y" }}</td>
+          <td class="right nowrap">{{ p.amount|money }}</td>
+          <td class="small">{{ p.note }}</td>
+          <td class="right">{% if perms.ipam.delete_payment %}<a class="btn btn-sm" href="{% url 'ipam:payment_delete' object.pk p.pk %}">O'chirish</a>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}<p class="empty">To'lovlar yo'q.</p>{% endif %}
+  </div>
+</div>
+{% else %}
+<p class="muted small">Narx va to'lov ma'lumotlari sizning rolingiz uchun yopiq.</p>
+{% endif %}
+{% endwith %}
+{% endblock %}

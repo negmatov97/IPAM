@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}O'chirish — IPAM{% endblock %}
+{% block content %}
+<div class="page-head"><h1>O'chirishni tasdiqlang</h1></div>
+<div class="card narrow">
+  <p>Rostdan ham <strong>{{ object }}</strong> ni o'chirmoqchimisiz?</p>
+  {% if object.addresses.exists %}
+    <p class="muted">Diqqat: bu subnetdagi {{ object.addresses.count }} ta IP manzil ham o'chib ketadi.</p>
+  {% endif %}
+  {% if object.ip_addresses.exists %}
+    <p class="muted">Unga bog'langan {{ object.ip_addresses.count }} ta IP manzil o'chmaydi, faqat bog'lanish uziladi.</p>
+  {% endif %}
+  {% if object.subnets.exists %}
+    <p class="muted">Bog'langan subnetlar o'chmaydi, faqat bog'lanish uziladi.</p>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Ha, o'chirish</button>
+      <a class="btn" href="javascript:history.back()">Bekor qilish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

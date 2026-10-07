@@ -1,0 +1,12 @@
+# Repozitoriyda matnli fayllar LF bilan saqlanadi
+* text=auto
+
+# Linux serverida ishlatiladigan fayllar har doim LF bo'lsin
+deploy/*.service text eol=lf
+deploy/*.timer text eol=lf
+deploy/*.conf text eol=lf
+deploy/*.py text eol=lf
+.env.example text eol=lf
+
+# Windows skriptlari
+*.ps1 text eol=crlf

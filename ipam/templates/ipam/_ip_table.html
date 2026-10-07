@@ -1,0 +1,37 @@
+{# Parametrlar: addresses, hide_subnet, hide_location, hide_device #}
+{% if addresses %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>IP manzil</th><th>Holati</th>
+      {% if not hide_subnet %}<th>Subnet</th>{% endif %}
+      {% if not hide_location %}<th>Filial</th>{% endif %}
+      {% if not hide_device %}<th>Qurilma</th>{% endif %}
+      <th>Hostname / MAC</th><th>Tavsif</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ip in addresses %}
+    <tr>
+      <td class="mono nowrap"><a href="{% url 'ipam:ip_update' ip.subnet_id ip.pk %}">{{ ip.address }}</a></td>
+      <td><span class="badge badge-{{ ip.status }}">{{ ip.get_status_display }}</span></td>
+      {% if not hide_subnet %}<td class="mono small"><a href="{{ ip.subnet.get_absolute_url }}">{{ ip.subnet.network }}</a></td>{% endif %}
+      {% if not hide_location %}<td>{% include "ipam/_location.html" with b=ip.branch %}</td>{% endif %}
+      {% if not hide_device %}
+        <td>{% if ip.device %}<a href="{{ ip.device.get_absolute_url }}">{{ ip.device.name }}</a><div><span class="tag">{{ ip.device.get_device_type_display }}</span></div>{% else %}<span class="muted">—</span>{% endif %}</td>
+      {% endif %}
+      <td>{{ ip.hostname|default:"—" }}{% if ip.mac_address %}<div class="mono small muted">{{ ip.mac_address }}</div>{% endif %}</td>
+      <td class="small">{{ ip.description }}</td>
+      <td class="right nowrap">
+        <a class="btn btn-sm" href="{% url 'ipam:ip_update' ip.subnet_id ip.pk %}">Tahrirlash</a>
+        <a class="btn btn-sm" href="{% url 'ipam:ip_delete' ip.subnet_id ip.pk %}">O'chirish</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+  <p class="empty">IP manzillar yo'q.</p>
+{% endif %}

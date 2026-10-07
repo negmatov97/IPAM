@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Subnetlar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Subnetlar</h1></div>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'ipam:subnet_create' %}">+ Subnet</a></div>
+</div>
+{% include "ipam/_filters.html" with placeholder="Subnet, IP yoki hostname" export=True %}
+<div class="card flush table-wrap">
+  <table>
+    <thead><tr><th>Tarmoq</th><th>Nomi</th><th>Filial</th><th>VLAN</th><th>Shlyuz</th><th>Bandlik</th></tr></thead>
+    <tbody>
+      {% for s in subnets %}
+      <tr>
+        <td class="mono"><a href="{{ s.get_absolute_url }}">{{ s.network }}</a></td>
+        <td>{{ s.name }}</td>
+        <td>{% include "ipam/_location.html" with b=s.branch %}</td>
+        <td>{% if s.vlan %}{{ s.vlan.vid }}{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td class="mono">{{ s.gateway|default:"—" }}</td>
+        <td class="nowrap">
+          {% with u=s.utilization %}
+          <span class="bar"><span style="width: {{ u|floatformat:0 }}%" class="{% if u >= 90 %}full{% elif u >= 70 %}warn{% endif %}"></span></span>
+          <span class="muted small">{{ s.num_ips }} / {{ s.size }} ({{ u }}%)</span>
+          {% endwith %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="empty">{% if request.GET %}Hech narsa topilmadi.{% else %}Hozircha subnet yo'q. <a href="{% url 'ipam:subnet_create' %}">Birinchi subnetni qo'shing</a>.{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

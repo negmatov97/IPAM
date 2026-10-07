@@ -1,0 +1,11 @@
+{% if is_paginated %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a class="btn btn-sm" href="{% querystring page=page_obj.previous_page_number %}">← Oldingi</a>
+  {% endif %}
+  <span class="muted small">{{ page_obj.number }} / {{ paginator.num_pages }} sahifa · jami {{ paginator.count }}</span>
+  {% if page_obj.has_next %}
+    <a class="btn btn-sm" href="{% querystring page=page_obj.next_page_number %}">Keyingi →</a>
+  {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,12 @@
+<form method="get" class="filters">
+  {% for f in filter_form %}
+    {% if f.name == "q" %}
+      <input type="search" name="q" value="{{ f.value|default:'' }}" placeholder="{{ placeholder|default:'Qidirish...' }}">
+    {% else %}
+      {{ f }}
+    {% endif %}
+  {% endfor %}
+  <button class="btn" type="submit">Qidirish</button>
+  {% if request.GET %}<a class="btn" href="?">Tozalash</a>{% endif %}
+  {% if export %}{% include "ipam/_export_buttons.html" %}{% endif %}
+</form>

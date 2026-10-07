@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Qurilmalar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Qurilmalar</h1></div>
+  <div class="actions"><a class="btn btn-primary" href="{% url 'ipam:device_create' %}">+ Qurilma</a></div>
+</div>
+{% include "ipam/_filters.html" with placeholder="Nomi, model, seriya/inventar raqami yoki IP" export=True %}
+<div class="card flush table-wrap">
+  <table>
+    <thead><tr><th>Qurilma</th><th>Turi</th><th>Filial</th><th>Model</th><th>Seriya / inventar</th><th>IP manzillar</th></tr></thead>
+    <tbody>
+      {% for d in devices %}
+      <tr>
+        <td><a href="{{ d.get_absolute_url }}">{{ d.name }}</a>{% if d.location %}<div class="location">{{ d.location }}</div>{% endif %}</td>
+        <td><span class="tag">{{ d.get_device_type_display }}</span></td>
+        <td>{% include "ipam/_location.html" with b=d.branch %}</td>
+        <td>{{ d.vendor }} {{ d.model }}</td>
+        <td class="mono small">{{ d.serial_number|default:"—" }}{% if d.inventory_number %}<div class="muted">{{ d.inventory_number }}</div>{% endif %}</td>
+        <td class="mono small">{% for ip in d.ip_addresses.all %}<a href="{% url 'ipam:ip_update' ip.subnet_id ip.pk %}">{{ ip.address }}</a>{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="empty">Qurilma topilmadi.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "ipam/_pagination.html" %}
+</div>
+{% endblock %}

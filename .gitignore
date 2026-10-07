@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Maxfiy sozlamalar — hech qachon Git'ga qo'shilmasin
+.env
+
+# Ma'lumotlar va ish jarayonida yaratiladigan fayllar
+db.sqlite3
+db.sqlite3-journal
+backups/
+logs/
+staticfiles/
+
+# Muharrir / vosita fayllari
+.claude/

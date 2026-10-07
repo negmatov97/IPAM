@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Harakatlar qaydi — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Harakatlar qaydi</h1><p class="sub">Kim, qachon, qayerdan va nimani o'zgartirgani — qaydlarni o'zgartirib yoki o'chirib bo'lmaydi</p></div>
+  <div class="actions"><a class="btn" href="{% url 'ipam:access_control' %}">Rollar va huquqlar</a></div>
+</div>
+<form method="get" class="filters">
+  <input type="search" name="q" value="{{ filter_form.q.value|default:'' }}" placeholder="Obyekt, login yoki IP">
+  {{ filter_form.user }}
+  {{ filter_form.action }}
+  {{ filter_form.model_name }}
+  <label class="calc-field"><span>Sanadan</span>{{ filter_form.date_from }}</label>
+  <label class="calc-field"><span>Sanagacha</span>{{ filter_form.date_to }}</label>
+  <button class="btn" type="submit">Qidirish</button>
+  {% if request.GET %}<a class="btn" href="?">Tozalash</a>{% endif %}
+  {% include "ipam/_export_buttons.html" %}
+</form>
+<div class="card flush">
+  {% include "ipam/_audit_rows.html" %}
+  {% include "ipam/_pagination.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,1 @@
+{% if b %}<div class="location"><a href="{{ b.district.region.get_absolute_url }}">{{ b.district.region.name }}</a> › {{ b.district.name }}</div><a href="{{ b.get_absolute_url }}">{{ b.name }}</a>{% else %}<span class="muted">—</span>{% endif %}

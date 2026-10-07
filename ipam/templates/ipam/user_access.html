@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ target.username }} — huquqlar — IPAM{% endblock %}
+{% block content %}
+<div class="breadcrumbs"><span><a href="{% url 'ipam:access_control' %}">Rollar va huquqlar</a></span><span>{{ target.username }}</span></div>
+<div class="page-head">
+  <div>
+    <h1>{{ target.username }}{% if target.get_full_name %} <span class="muted" style="font-weight:400">· {{ target.get_full_name }}</span>{% endif %}</h1>
+    <p class="sub">
+      {% if profile.is_online %}<span class="dot online"></span> Onlayn{% else %}<span class="dot"></span> Oflayn{% endif %}
+      {% if profile.last_seen %}· oxirgi faollik {{ profile.last_seen|date:"d.m.Y H:i" }}{% endif %}
+      {% if profile.last_ip %}· IP {{ profile.last_ip }}{% endif %}
+    </p>
+  </div>
+  <div class="actions">
+    {% if user.is_staff %}<a class="btn" href="{% url 'admin:auth_user_change' target.pk %}">Parol va ma'lumotlar</a>{% endif %}
+  </div>
+</div>
+
+{% if target.is_superuser %}
+  <ul class="messages"><li class="warning">Bu superadmin: u har doim barcha hududlar va barcha huquqlarga ega. Quyidagi sozlamalar unga ta'sir qilmaydi.</li></ul>
+{% endif %}
+
+<form method="post" class="card narrow">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+
+  <div class="form-row">
+    <label>{{ form.groups.label }}</label>
+    <div class="checks">{{ form.groups }}</div>
+  </div>
+
+  <div class="form-row">
+    <label class="inline-check">{{ form.all_regions }} {{ form.all_regions.label }}</label>
+    <div class="help">{{ form.all_regions.help_text }}</div>
+  </div>
+
+  <div class="form-row" id="regions-row">
+    <label>{{ form.regions.label }}</label>
+    <div class="checks checks-grid">{{ form.regions }}</div>
+    <div class="help">{{ form.regions.help_text }}</div>
+  </div>
+
+  <div class="form-row">
+    <label class="inline-check">{{ form.can_view_prices }} {{ form.can_view_prices.label }}</label>
+    <div class="help">Rol orqali berilgan huquq bu yerda o'chirilmaydi — u roldan keladi.</div>
+  </div>
+
+  <div class="form-row">
+    <label class="inline-check">{{ form.is_active }} {{ form.is_active.label }}</label>
+    {% if form.is_active.errors %}<ul class="errorlist">{% for e in form.is_active.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Saqlash</button>
+    <a class="btn" href="{% url 'ipam:access_control' %}">Bekor qilish</a>
+  </div>
+</form>
+
+{% if perms.ipam.view_auditlog %}
+<div class="card flush narrow">
+  <h2>Oxirgi harakatlari <a class="btn btn-sm" href="{% url 'ipam:audit_list' %}?user={{ target.pk }}">Barchasi</a></h2>
+  {% include "ipam/_audit_rows.html" with logs=recent_logs compact=True %}
+</div>
+{% endif %}
+
+<script>
+  // "Barcha hududlar" belgilansa, viloyatlar ro'yxati kerak emas
+  (function () {
+    var all = document.getElementById("id_all_regions");
+    var row = document.getElementById("regions-row");
+    function sync() { row.style.opacity = all.checked ? 0.45 : 1; }
+    all.addEventListener("change", sync); sync();
+  })();
+</script>
+{% endblock %}

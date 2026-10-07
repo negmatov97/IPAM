@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ subnet.network }} — IPAM{% endblock %}
+{% block content %}
+<div class="breadcrumbs"><span><a href="{% url 'ipam:subnet_list' %}">Subnetlar</a></span><span>{{ subnet.network }}</span></div>
+<div class="page-head">
+  <div>
+    <h1 class="mono">{{ subnet.network }}</h1>
+    <p class="sub">{{ subnet.name }}</p>
+  </div>
+  <div class="actions">
+    {% if can_edit_subnet and perms.ipam.change_subnet %}<a class="btn" href="{% url 'ipam:subnet_update' subnet.pk %}">Tahrirlash</a>{% endif %}
+    {% if can_edit_subnet and perms.ipam.delete_subnet %}<a class="btn" href="{% url 'ipam:subnet_delete' subnet.pk %}">O'chirish</a>{% endif %}
+    {% if first_free %}<a class="btn btn-primary" href="{% url 'ipam:ip_create' subnet.pk %}">+ IP qo'shish</a>{% endif %}
+  </div>
+</div>
+
+<div class="card meta">
+  {% if subnet.branch %}
+    <div><span>Viloyat</span><a href="{{ subnet.branch.district.region.get_absolute_url }}">{{ subnet.branch.district.region.name }}</a></div>
+    <div><span>Tuman</span>{{ subnet.branch.district.name }}</div>
+    <div><span>Filial</span><a href="{{ subnet.branch.get_absolute_url }}">{{ subnet.branch.name }}</a></div>
+  {% else %}
+    <div><span>Filial</span><span class="muted">Umumiy (biriktirilmagan)</span></div>
+  {% endif %}
+  <div><span>VLAN</span>{% if subnet.vlan %}{{ subnet.vlan }}{% else %}—{% endif %}</div>
+  <div><span>Shlyuz</span><span class="mono">{{ subnet.gateway|default:"—" }}</span></div>
+  <div><span>Bandlik</span>{{ subnet.used_count }} / {{ subnet.size }} ({{ subnet.utilization }}%)</div>
+  <div><span>Birinchi bo'sh IP</span><span class="mono">{{ first_free|default:"Bo'sh joy yo'q" }}</span></div>
+  {% if subnet.description %}<div class="wide"><span>Tavsif</span>{{ subnet.description|linebreaksbr }}</div>{% endif %}
+</div>
+
+{% if grid %}
+<div class="card">
+  <div class="legend">
+    <span><i class="cell-free" style="border:1px solid var(--free-border)"></i>Bo'sh</span>
+    <span><i class="cell-used"></i>Band</span>
+    <span><i class="cell-reserved"></i>Zaxirada</span>
+    <span><i class="cell-dhcp"></i>DHCP</span>
+    <span><i class="cell-gateway"></i>Shlyuz</span>
+    {% if hidden_count %}<span><i class="cell-foreign"></i>Boshqa viloyat</span>{% endif %}
+  </div>
+  <div class="grid">
+    {% for c in grid %}
+      {% if c.obj %}
+        <a class="cell cell-{{ c.state }}" href="{% url 'ipam:ip_update' subnet.pk c.obj.pk %}" title="{{ c.ip }}{% if c.obj.device %} — {{ c.obj.device.name }}{% elif c.obj.hostname %} — {{ c.obj.hostname }}{% endif %}{% if c.obj.branch %} ({{ c.obj.branch.name }}){% endif %}">{{ c.label }}</a>
+      {% elif c.state == "gateway" %}
+        <span class="cell cell-gateway" title="{{ c.ip }} — shlyuz">{{ c.label }}</span>
+      {% elif c.state == "foreign" %}
+        <span class="cell cell-foreign" title="{{ c.ip }} — boshqa viloyatga tegishli">{{ c.label }}</span>
+      {% else %}
+        <a class="cell cell-free" href="{% url 'ipam:ip_create' subnet.pk %}?ip={{ c.ip }}" title="{{ c.ip }} — bo'sh">{{ c.label }}</a>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card flush">
+  <h2>IP manzillar <span class="count">{{ addresses|length }}</span></h2>
+  {% include "ipam/_ip_table.html" with hide_subnet=True %}
+  {% if hidden_count %}<p class="muted small" style="padding: 0 20px 16px">Bu umumiy subnetda yana {{ hidden_count }} ta IP boshqa viloyatlarga tegishli — ular sizga ko'rsatilmaydi.</p>{% endif %}
+</div>
+{% endblock %}

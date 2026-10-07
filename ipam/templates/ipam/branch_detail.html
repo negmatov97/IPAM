@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ branch.name }} — IPAM{% endblock %}
+{% block content %}
+<div class="breadcrumbs">
+  <span><a href="{% url 'ipam:region_list' %}">Hududlar</a></span>
+  <span><a href="{{ branch.district.region.get_absolute_url }}">{{ branch.district.region.name }}</a></span>
+  <span>{{ branch.district.name }}</span>
+</div>
+<div class="page-head">
+  <div><h1>{{ branch.name }}{% if branch.code %} <span class="tag">{{ branch.code }}</span>{% endif %}</h1></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'ipam:branch_update' branch.pk %}">Tahrirlash</a>
+    <a class="btn" href="{% url 'ipam:branch_delete' branch.pk %}">O'chirish</a>
+    <a class="btn" href="{% url 'ipam:subnet_create' %}?branch={{ branch.pk }}">+ Subnet</a>
+    <a class="btn btn-primary" href="{% url 'ipam:device_create' %}?branch={{ branch.pk }}">+ Qurilma</a>
+  </div>
+</div>
+
+<div class="card meta">
+  <div><span>Viloyat</span><a href="{{ branch.district.region.get_absolute_url }}">{{ branch.district.region.name }}</a></div>
+  <div><span>Tuman</span>{{ branch.district.name }}</div>
+  <div><span>Manzil</span>{{ branch.address|default:"—" }}</div>
+  <div><span>Mas'ul shaxs</span>{{ branch.contact_person|default:"—" }}</div>
+  <div><span>Telefon</span>{{ branch.phone|default:"—" }}</div>
+  {% if branch.description %}<div class="wide"><span>Tavsif</span>{{ branch.description|linebreaksbr }}</div>{% endif %}
+</div>
+
+<div class="card flush">
+  <h2>Subnetlar <span class="count">{{ subnets|length }}</span></h2>
+  {% if subnets %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Tarmoq</th><th>Nomi</th><th>VLAN</th><th>Bandlik</th></tr></thead>
+    <tbody>
+      {% for s in subnets %}
+      <tr>
+        <td class="mono"><a href="{{ s.get_absolute_url }}">{{ s.network }}</a></td>
+        <td>{{ s.name }}</td>
+        <td>{{ s.vlan.vid|default:"—" }}</td>
+        <td class="nowrap"><span class="bar"><span style="width: {{ s.utilization|floatformat:0 }}%"></span></span><span class="small muted">{{ s.num_ips }} / {{ s.size }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="empty">Filialga subnet biriktirilmagan.</p>{% endif %}
+</div>
+
+<div class="card flush">
+  <h2>Qurilmalar <span class="count">{{ devices|length }}</span></h2>
+  {% if devices %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Nomi</th><th>Turi</th><th>Model</th><th>Joylashuvi</th><th>IP manzillar</th></tr></thead>
+    <tbody>
+      {% for d in devices %}
+      <tr>
+        <td><a href="{{ d.get_absolute_url }}">{{ d.name }}</a></td>
+        <td><span class="tag">{{ d.get_device_type_display }}</span></td>
+        <td>{{ d.vendor }} {{ d.model }}</td>
+        <td class="small">{{ d.location|default:"—" }}</td>
+        <td class="mono small">{% for ip in d.ip_addresses.all %}{{ ip.address }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="empty">Qurilmalar yo'q.</p>{% endif %}
+</div>
+
+<div class="card flush">
+  <h2>IP manzillar <span class="count">{{ addresses|length }}</span></h2>
+  {% include "ipam/_ip_table.html" with hide_location=True %}
+</div>
+{% endblock %}

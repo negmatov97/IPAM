@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load ipam_tags %}
+{% block title %}VLAN ijaralari — IPAM{% endblock %}
+{% block content %}
+{% with show_prices=perms.ipam.view_prices %}
+<div class="page-head">
+  <div><h1>VLAN ijaralari</h1><p class="sub">Shartnomalar{% if show_prices %}, hisoblangan summalar va to'lovlar{% endif %}</p></div>
+  <div class="actions">{% if perms.ipam.add_vlanlease %}<a class="btn btn-primary" href="{% url 'ipam:lease_create' %}">+ Ijara</a>{% endif %}</div>
+</div>
+
+{% if show_prices %}
+<div class="stats money">
+  <div class="stat"><div class="num">{{ leases|length }}</div><div class="label">Ijaralar (tanlangan)</div></div>
+  <div class="stat"><div class="num">{{ totals.monthly|money }}</div><div class="label">Oylik tushum (amaldagilar)</div></div>
+  <div class="stat"><div class="num">{{ totals.accrued|money }}</div><div class="label">Jami hisoblangan</div></div>
+  <div class="stat"><div class="num">{{ totals.paid|money }}</div><div class="label">Jami to'langan</div></div>
+  <div class="stat"><div class="num {% if totals.balance > 0 %}text-danger{% endif %}">{{ totals.balance|money }}</div><div class="label">Qarzdorlik</div></div>
+</div>
+{% endif %}
+
+{% include "ipam/_filters.html" with placeholder="Ijarachi, shartnoma raqami" export=True %}
+
+<div class="card flush table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>VLAN</th><th>Ijarachi</th><th>Hudud</th><th>Tezlik / masofa</th><th>Davr</th><th>Muddat</th>
+        {% if show_prices %}<th class="right">Narx</th><th class="right">Hisoblangan</th><th class="right">To'langan</th><th class="right">Qoldiq</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for x in leases %}
+      <tr>
+        <td class="nowrap"><a href="{{ x.get_absolute_url }}"><strong>{{ x.vlan.vid }}</strong></a><div class="location">{{ x.vlan.name }}</div>{% if x.vlan.vlan_type %}<span class="tag">{{ x.vlan.vlan_type }}</span>{% endif %}</td>
+        <td><a href="{{ x.get_absolute_url }}">{{ x.tenant }}</a>{% if x.contract_number %}<div class="location">№ {{ x.contract_number }}</div>{% endif %}</td>
+        <td>{{ x.region.name }}{% if x.branch %}<div class="location">{{ x.branch.name }}</div>{% endif %}</td>
+        <td class="nowrap">{{ x.bandwidth_mbps|floatformat:"-2" }} Mbit/s<div class="location">{{ x.distance_km|floatformat:"-2" }} km</div></td>
+        <td><span class="tag">{{ x.get_billing_period_display }}</span></td>
+        <td class="small nowrap">{{ x.start_date|date:"d.m.Y" }} —<br>{% if x.end_date %}{{ x.end_date|date:"d.m.Y" }}{% else %}<span class="muted">muddatsiz</span>{% endif %}{% if not x.is_active %}<div><span class="tag">Faol emas</span></div>{% endif %}</td>
+        {% if show_prices %}
+        <td class="right nowrap">{{ x.current_price|money }}{% if x.custom_price is not None %}<div class="location">maxsus</div>{% endif %}</td>
+        <td class="right nowrap">{{ x.accrued_total|money }}</td>
+        <td class="right nowrap">{{ x.paid_total|money }}</td>
+        <td class="right nowrap {% if x.balance > 0 %}text-danger{% endif %}"><strong>{{ x.balance|money }}</strong></td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="10" class="empty">{% if request.GET %}Hech narsa topilmadi.{% else %}Hali ijara yo'q.{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endwith %}
+{% endblock %}

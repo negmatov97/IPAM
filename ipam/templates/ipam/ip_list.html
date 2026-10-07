@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}IP manzillar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>IP manzillar</h1><p class="sub">Barcha subnetlardagi manzillar — hudud, filial va qurilma bo'yicha</p></div>
+</div>
+{% include "ipam/_filters.html" with placeholder="IP, hostname, MAC, qurilma yoki tavsif" export=True %}
+<div class="card flush">
+  {% include "ipam/_ip_table.html" %}
+  {% include "ipam/_pagination.html" %}
+</div>
+{% endblock %}

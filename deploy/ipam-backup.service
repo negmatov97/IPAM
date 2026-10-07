@@ -1,0 +1,11 @@
+# /etc/systemd/system/ipam-backup.service — ipam-backup.timer tomonidan ishga tushiriladi
+[Unit]
+Description=IPAM bazasining zaxira nusxasi
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=ipam
+WorkingDirectory=/opt/ipam
+EnvironmentFile=/opt/ipam/.env
+ExecStart=/opt/ipam/.venv/bin/python manage.py backup_db

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Rollar va huquqlar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Rollar va huquqlar</h1><p class="sub">Foydalanuvchilar, ularning viloyatlari, onlayn holati va narxlarni ko'rish huquqi</p></div>
+  <div class="actions">
+    {% if perms.ipam.view_auditlog %}<a class="btn" href="{% url 'ipam:audit_list' %}">Harakatlar qaydi</a>{% endif %}
+    {% if user.is_staff %}<a class="btn btn-primary" href="{% url 'admin:auth_user_add' %}">+ Foydalanuvchi</a>{% endif %}
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="num"><span class="dot online"></span> {{ online_count }}</div><div class="label">Hozir onlayn</div></div>
+  <div class="stat"><div class="num">{{ users|length }}</div><div class="label">Jami foydalanuvchilar</div></div>
+</div>
+
+<div class="card flush">
+  <h2>Foydalanuvchilar</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Foydalanuvchi</th><th>Holat</th><th>Rollar</th><th>Viloyatlar</th><th>Narxlarni ko'rish</th><th></th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>
+          <strong>{{ u.username }}</strong>{% if u.get_full_name %}<div class="location">{{ u.get_full_name }}</div>{% endif %}
+          {% if u.is_superuser %}<span class="tag tag-blue">Superadmin</span>{% endif %}
+          {% if not u.is_active %}<span class="tag">Bloklangan</span>{% endif %}
+        </td>
+        <td class="nowrap">
+          {% if u.is_online %}<span class="dot online"></span> <strong class="text-green">Onlayn</strong>
+          {% else %}<span class="dot"></span> <span class="muted">Oflayn</span>{% endif %}
+          <div class="location">{% if u.last_seen %}{{ u.last_seen|timesince }} oldin{% else %}hali kirmagan{% endif %}</div>
+        </td>
+        <td>{% for g in u.groups.all %}<span class="tag">{{ g.name }}</span> {% empty %}<span class="muted">—</span>{% endfor %}</td>
+        <td class="small">
+          {% if u.all_regions %}<span class="tag tag-green">Barcha hududlar</span>
+          {% elif u.region_names %}{{ u.region_names|join:", " }}
+          {% else %}<span class="text-danger">Biriktirilmagan</span>{% endif %}
+        </td>
+        <td class="nowrap">
+          {% if u.is_superuser %}
+            <button class="switch on" disabled>● Har doim</button>
+          {% else %}
+            <form method="post" class="switch-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="user_prices">
+              <input type="hidden" name="user" value="{{ u.pk }}">
+              <input type="hidden" name="enabled" value="{% if u.direct_price %}0{% else %}1{% endif %}">
+              <button class="switch {% if u.can_view_prices %}on{% endif %}" type="submit">
+                {% if u.can_view_prices %}● Yoqilgan{% else %}○ O'chirilgan{% endif %}
+              </button>
+            </form>
+            {% if u.price_via_group %}<div class="location">rol orqali{% if u.direct_price %} + shaxsan{% endif %}</div>
+            {% elif u.direct_price %}<div class="location">shaxsan berilgan</div>{% endif %}
+          {% endif %}
+        </td>
+        <td class="right nowrap">
+          {% if perms.ipam.view_auditlog %}<a class="btn btn-sm" href="{% url 'ipam:audit_list' %}?user={{ u.pk }}">Harakatlari</a>{% endif %}
+          <a class="btn btn-sm" href="{% url 'ipam:user_access' u.pk %}">Sozlash</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small" style="padding: 0 20px 16px">Onlayn — oxirgi 5 daqiqa ichida tizimda faol bo'lgan va chiqib ketmagan foydalanuvchi.
+    Viloyat biriktirilmagan (va «Barcha hududlar» belgilanmagan) foydalanuvchi hech qanday IP ma'lumotini ko'rmaydi.</p>
+</div>
+
+<div class="card flush">
+  <h2>Rollar</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Rol</th><th class="right">Foydalanuvchilar</th><th>Narxlarni ko'rish</th></tr></thead>
+    <tbody>
+      {% for g in groups %}
+      <tr>
+        <td><strong>{{ g.name }}</strong></td>
+        <td class="right">{{ g.user_set.all|length }}</td>
+        <td>
+          <form method="post" class="switch-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="group_prices">
+            <input type="hidden" name="group" value="{{ g.pk }}">
+            <input type="hidden" name="enabled" value="{% if g.can_view_prices %}0{% else %}1{% endif %}">
+            <button class="switch {% if g.can_view_prices %}on{% endif %}" type="submit">
+              {% if g.can_view_prices %}● Yoqilgan{% else %}○ O'chirilgan{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

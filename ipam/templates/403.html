@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Ruxsat yo'q — IPAM{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1 style="margin-top:0">Ruxsat yo'q</h1>
+  <p>Bu sahifani ko'rish yoki bu amalni bajarish uchun sizning rolingizda ruxsat yo'q.</p>
+  <p class="muted">Kerak bo'lsa, tizim administratoriga murojaat qiling.</p>
+  <div class="form-actions">
+    <a class="btn" href="javascript:history.back()">Orqaga</a>
+    <a class="btn btn-primary" href="{% url 'ipam:dashboard' %}">Bosh sahifa</a>
+  </div>
+</div>
+{% endblock %}

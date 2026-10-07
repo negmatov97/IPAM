@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load ipam_tags %}
+{% block title %}Narxlar — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Narxlar (prays-list)</h1><p class="sub">VLAN ijarasi: VLAN turi va viloyat kesimida · {{ today|date:"d.m.Y" }} holatiga</p></div>
+  <div class="actions">
+    {% include "ipam/_export_buttons.html" %}
+    <a class="btn" href="{% url 'ipam:vlantype_list' %}">VLAN turlari</a>
+    {% if perms.ipam.add_tariff %}<a class="btn btn-primary" href="{% url 'ipam:tariff_create' %}">+ Narx</a>{% endif %}
+  </div>
+</div>
+
+<div class="card formula">
+  <strong>Hisoblash formulasi:</strong>
+  oylik narx = <b>tezlik (Mbit/s)</b> × (<b>asosiy narx</b> + <b>qadamlar soni</b> × <b>qadam narxi</b>)
+  <div class="muted small">Qadamlar soni = (masofa − asosiy masofa) ÷ qadam uzunligi, yuqoriga yaxlitlanadi.
+    Misol: 50 km gacha 1 Mbit/s 100 000 so'm, keyin har 10 km uchun +20 000 so'm → 10 Mbit/s, 73 km:
+    10 × (100 000 + 3 × 20 000) = 1 600 000 so'm. «Kanal uchun» narxda tezlik hisobga olinmaydi.
+    Yillik to'lovda: oylik × 12 − chegirma.</div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Narx kalkulyatori</h2>
+  <form method="get" class="calc-form">
+    {% for f in calc_form %}
+      <label class="calc-field"><span>{{ f.label }}</span>{{ f }}</label>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Hisoblash</button>
+  </form>
+  {% if calc_form.errors %}<ul class="errorlist">{% for field in calc_form %}{% for e in field.errors %}<li>{{ field.label }}: {{ e }}</li>{% endfor %}{% endfor %}</ul>{% endif %}
+  {% if calc %}
+    {% if calc.tariff %}
+    <div class="calc-result">
+      <div class="stats money" style="margin-bottom:8px">
+        <div class="stat"><div class="num">{{ calc.result.monthly|money }}</div><div class="label">Oylik</div></div>
+        <div class="stat"><div class="num">{{ calc.result.yearly|money }}</div><div class="label">Yillik{% if calc.tariff.yearly_discount %} (−{{ calc.tariff.yearly_discount|floatformat:"-2" }}%){% endif %}</div></div>
+      </div>
+      <div class="small"><b>Hisob:</b> {{ calc.result.explanation }}</div>
+      <div class="small muted">Qo'llangan tarif: {{ calc.tariff }} — {{ calc.tariff.rule_text }}</div>
+    </div>
+    {% else %}
+      <ul class="messages"><li class="warning">Tanlangan tur va viloyat uchun bu sanada amal qiladigan narx topilmadi.</li></ul>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="card flush">
+  <h2>Amaldagi narxlar</h2>
+  <p class="muted small" style="padding: 0 20px">
+    <span class="tag tag-blue">Viloyat</span> — shu viloyat uchun alohida belgilangan narx,
+    <span class="tag">Umumiy</span> — barcha hududlar uchun narx qo'llanmoqda.
+  </p>
+  <div class="table-wrap">
+  <table class="price-matrix">
+    <thead>
+      <tr>
+        <th>Viloyat</th>
+        {% for col in columns %}<th>{% if col %}{{ col.name }}{% else %}Turi ko'rsatilmagan{% endif %}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="nowrap">{{ row.region.name }}</td>
+        {% for cell in row.cells %}
+        <td class="small">
+          {% if cell.tariff %}
+            {% if cell.own %}<span class="tag tag-blue">Viloyat</span>{% else %}<span class="tag">Umumiy</span>{% endif %}
+            <div>{{ cell.tariff.rule_text }}</div>
+            {% if cell.tariff.yearly_discount %}<div class="muted">yillikda −{{ cell.tariff.yearly_discount|floatformat:"-2" }}%</div>{% endif %}
+            <div class="muted">{{ cell.tariff.valid_from|date:"d.m.Y" }} dan</div>
+          {% else %}
+            <span class="muted">Narx yo'q</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="card flush">
+  <h2>Barcha tariflar (tarix) <span class="count">{{ tariffs|length }}</span></h2>
+  <p class="muted small" style="padding: 0 20px">Narx o'zgarsa, eskisini o'chirmang — yangi sana bilan yangi narx qo'shing. O'tgan davrlar eski narxda, keyingilari yangi narxda hisoblanadi.
+    Bir nechta tarif mos kelsa, eng aniqi olinadi: tur + viloyat → tur → viloyat → umumiy.</p>
+  {% if tariffs %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>VLAN turi</th><th>Viloyat</th><th>Qoida</th><th>Yillik chegirma</th><th>Amal qiladi</th><th>Izoh</th><th></th></tr></thead>
+    <tbody>
+      {% for t in tariffs %}
+      <tr>
+        <td>{{ t.vlan_type.name|default:"Barcha turlar" }}</td>
+        <td>{{ t.region.name|default:"Barcha hududlar" }}</td>
+        <td class="small">{{ t.rule_text }}</td>
+        <td>{% if t.yearly_discount %}{{ t.yearly_discount|floatformat:"-2" }}%{% else %}—{% endif %}</td>
+        <td class="nowrap">{{ t.valid_from|date:"d.m.Y" }}</td>
+        <td class="small">{{ t.note }}</td>
+        <td class="right nowrap">
+          {% if perms.ipam.change_tariff %}<a class="btn btn-sm" href="{% url 'ipam:tariff_update' t.pk %}">Tahrirlash</a>{% endif %}
+          {% if perms.ipam.delete_tariff %}<a class="btn btn-sm" href="{% url 'ipam:tariff_delete' t.pk %}">O'chirish</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="empty">Hali narx kiritilmagan. Avval umumiy narxni kiriting (tur va viloyatni bo'sh qoldiring).</p>{% endif %}
+</div>
+{% endblock %}

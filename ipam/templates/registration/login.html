@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Kirish — IPAM{% endblock %}
+{% block login %}
+<div class="login-box">
+  <h1>IPAM</h1>
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <ul class="errorlist"><li>Login yoki parol noto'g'ri.</li></ul>
+      {% endif %}
+      <div class="form-row">
+        <label for="id_username">Foydalanuvchi nomi</label>
+        <input type="text" name="username" id="id_username" autofocus required>
+      </div>
+      <div class="form-row">
+        <label for="id_password">Parol</label>
+        <input type="password" name="password" id="id_password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Kirish</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

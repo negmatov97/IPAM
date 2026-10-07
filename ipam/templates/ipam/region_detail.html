@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ region.name }} — IPAM{% endblock %}
+{% block content %}
+<div class="breadcrumbs"><span><a href="{% url 'ipam:region_list' %}">Hududlar</a></span><span>{{ region.name }}</span></div>
+<div class="page-head">
+  <div><h1>{{ region.name }}</h1><p class="sub">{{ districts|length }} ta tuman</p></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'ipam:ip_list' %}?region={{ region.pk }}">IP manzillar</a>
+    <a class="btn" href="{% url 'ipam:region_update' region.pk %}">Tahrirlash</a>
+    <a class="btn btn-primary" href="{% url 'ipam:district_create' %}?region={{ region.pk }}">+ Tuman</a>
+  </div>
+</div>
+
+{% for d in districts %}
+<div class="district">
+  <div class="district-head">
+    <h3>{{ d.name }} <span class="muted small">· {{ d.branches.all|length }} filial · {{ d.n_devices }} qurilma · {{ d.n_ips }} IP</span></h3>
+    <div class="actions">
+      <a class="btn btn-sm" href="{% url 'ipam:branch_create' %}?district={{ d.pk }}">+ Filial</a>
+      <a class="btn btn-sm" href="{% url 'ipam:district_update' d.pk %}">Tahrirlash</a>
+      <a class="btn btn-sm" href="{% url 'ipam:district_delete' d.pk %}">O'chirish</a>
+    </div>
+  </div>
+  {% if d.branches.all %}
+  <ul>
+    {% for b in d.branches.all %}
+    <li>
+      <span><a href="{{ b.get_absolute_url }}">{{ b.name }}</a>{% if b.code %} <span class="tag">{{ b.code }}</span>{% endif %}</span>
+      <span class="muted small">{{ b.address }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <ul><li class="muted small">Filial yo'q</li></ul>
+  {% endif %}
+</div>
+{% empty %}
+<div class="card"><p class="empty">Bu viloyatda hali tuman yo'q. <a href="{% url 'ipam:district_create' %}?region={{ region.pk }}">Tuman qo'shing</a>.</p></div>
+{% endfor %}
+{% endblock %}

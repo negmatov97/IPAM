@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}VLAN turlari — IPAM{% endblock %}
+{% block content %}
+<div class="breadcrumbs"><span><a href="{% url 'ipam:vlan_list' %}">VLAN'lar</a></span><span>VLAN turlari</span></div>
+<div class="page-head">
+  <div><h1>VLAN turlari</h1><p class="sub">Bir turdagi VLAN'lar bir xil tarif bo'yicha narxlanadi (viloyat kesimida farq qilishi mumkin)</p></div>
+  <div class="actions">{% if perms.ipam.add_vlantype %}<a class="btn btn-primary" href="{% url 'ipam:vlantype_create' %}">+ VLAN turi</a>{% endif %}</div>
+</div>
+<div class="card flush table-wrap">
+  <table>
+    <thead><tr><th>Nomi</th><th>Tavsif</th><th class="right">VLAN'lar</th>{% if perms.ipam.view_prices %}<th class="right">Tariflar</th>{% endif %}<th></th></tr></thead>
+    <tbody>
+      {% for t in types %}
+      <tr>
+        <td><strong>{{ t.name }}</strong></td>
+        <td class="small">{{ t.description }}</td>
+        <td class="right">{{ t.n_vlans }}</td>
+        {% if perms.ipam.view_prices %}<td class="right">{{ t.n_tariffs }}</td>{% endif %}
+        <td class="right nowrap">
+          {% if perms.ipam.add_tariff %}<a class="btn btn-sm" href="{% url 'ipam:tariff_create' %}?vlan_type={{ t.pk }}">+ Narx</a>{% endif %}
+          {% if perms.ipam.change_vlantype %}<a class="btn btn-sm" href="{% url 'ipam:vlantype_update' t.pk %}">Tahrirlash</a>{% endif %}
+          {% if perms.ipam.delete_vlantype %}<a class="btn btn-sm" href="{% url 'ipam:vlantype_delete' t.pk %}">O'chirish</a>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty">Hali VLAN turi yo'q. Masalan: «L2 kanal», «Internet», «Videokuzatuv».</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ device.name }} — IPAM{% endblock %}
+{% block content %}
+<div class="breadcrumbs">
+  <span><a href="{% url 'ipam:device_list' %}">Qurilmalar</a></span>
+  {% if device.branch %}<span><a href="{{ device.branch.get_absolute_url }}">{{ device.branch.name }}</a></span>{% endif %}
+  <span>{{ device.name }}</span>
+</div>
+<div class="page-head">
+  <div><h1>{{ device.name }}</h1><p class="sub"><span class="tag">{{ device.get_device_type_display }}</span> {{ device.vendor }} {{ device.model }}</p></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'ipam:device_update' device.pk %}">Tahrirlash</a>
+    <a class="btn" href="{% url 'ipam:device_delete' device.pk %}">O'chirish</a>
+  </div>
+</div>
+
+<div class="card meta">
+  {% if device.branch %}
+    <div><span>Viloyat</span><a href="{{ device.branch.district.region.get_absolute_url }}">{{ device.branch.district.region.name }}</a></div>
+    <div><span>Tuman</span>{{ device.branch.district.name }}</div>
+    <div><span>Filial</span><a href="{{ device.branch.get_absolute_url }}">{{ device.branch.name }}</a></div>
+  {% else %}
+    <div><span>Filial</span><span class="muted">Biriktirilmagan</span></div>
+  {% endif %}
+  <div><span>Joylashuvi</span>{{ device.location|default:"—" }}</div>
+  <div><span>Seriya raqami</span><span class="mono">{{ device.serial_number|default:"—" }}</span></div>
+  <div><span>Inventar raqami</span><span class="mono">{{ device.inventory_number|default:"—" }}</span></div>
+  <div><span>Yangilangan</span>{{ device.updated_at|date:"d.m.Y H:i" }}</div>
+  {% if device.description %}<div class="wide"><span>Tavsif</span>{{ device.description|linebreaksbr }}</div>{% endif %}
+</div>
+
+<div class="card flush">
+  <h2>IP manzillar <span class="count">{{ addresses|length }}</span></h2>
+  {% include "ipam/_ip_table.html" with hide_device=True hide_location=True %}
+  <p class="muted small" style="padding: 0 20px 16px">Qurilmaga IP biriktirish uchun subnet sahifasida IP qo'shing va «Qurilma» maydonida shu qurilmani tanlang.</p>
+</div>
+{% endblock %}

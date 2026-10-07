@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load ipam_tags %}
+{% block title %}Bosh sahifa — IPAM{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Bosh sahifa</h1>
+    <p class="sub">
+      {% if restricted_regions is None %}Tarmoq manzillari bo'yicha umumiy holat
+      {% elif restricted_regions %}Sizning hududlaringiz: <strong>{{ restricted_regions|join:", " }}</strong>
+      {% else %}<span class="text-danger">Sizga hali birorta viloyat biriktirilmagan — administratorga murojaat qiling.</span>{% endif %}
+    </p>
+  </div>
+  <div class="actions">
+    {% if perms.ipam.add_device %}<a class="btn" href="{% url 'ipam:device_create' %}">+ Qurilma</a>{% endif %}
+    {% if perms.ipam.add_subnet %}<a class="btn btn-primary" href="{% url 'ipam:subnet_create' %}">+ Subnet</a>{% endif %}
+  </div>
+</div>
+
+{% if online_users is not None %}
+<div class="card flush">
+  <h2>Hozir onlayn <span class="count">{{ online_users|length }}</span> <a class="btn btn-sm" href="{% url 'ipam:access_control' %}">Barcha foydalanuvchilar</a></h2>
+  <ul class="online-list">
+    {% for u in online_users %}<li><span class="dot online"></span> {{ u.get_full_name|default:u.username }}</li>{% empty %}<li class="muted">Hech kim yo'q</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="stats">
+  <a class="stat" href="{% url 'ipam:region_list' %}"><div class="num">{{ counts.regions }}</div><div class="label">Viloyatlar</div></a>
+  <a class="stat" href="{% url 'ipam:region_list' %}"><div class="num">{{ counts.districts }}</div><div class="label">Tumanlar</div></a>
+  <a class="stat" href="{% url 'ipam:branch_list' %}"><div class="num">{{ counts.branches }}</div><div class="label">Filiallar</div></a>
+  <a class="stat" href="{% url 'ipam:device_list' %}"><div class="num">{{ counts.devices }}</div><div class="label">Qurilmalar</div></a>
+  <a class="stat" href="{% url 'ipam:subnet_list' %}"><div class="num">{{ counts.subnets }}</div><div class="label">Subnetlar</div></a>
+  <a class="stat" href="{% url 'ipam:ip_list' %}"><div class="num">{{ counts.ips }}</div><div class="label">IP manzillar</div></a>
+</div>
+
+{% if perms.ipam.view_prices %}
+<div class="card flush">
+  <h2>VLAN ijarasi <a class="btn btn-sm" href="{% url 'ipam:lease_list' %}">Barchasi</a></h2>
+  <div class="stats money" style="padding: 0 20px; margin-bottom: 16px">
+    <a class="stat" href="{% url 'ipam:lease_list' %}?status=active"><div class="num">{{ active_leases }}</div><div class="label">Amaldagi ijaralar</div></a>
+    <div class="stat"><div class="num">{{ finance.monthly|money }}</div><div class="label">Oylik tushum</div></div>
+    <div class="stat"><div class="num">{{ finance.paid|money }}</div><div class="label">Jami to'langan</div></div>
+    <a class="stat" href="{% url 'ipam:lease_list' %}?status=debt"><div class="num {% if finance.balance > 0 %}text-danger{% endif %}">{{ finance.balance|money }}</div><div class="label">Qarzdorlik</div></a>
+  </div>
+  {% if debtors %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Eng katta qarzdorlar</th><th>VLAN</th><th>Viloyat</th><th class="right">Qarz</th></tr></thead>
+    <tbody>
+      {% for x in debtors %}
+      <tr>
+        <td><a href="{{ x.get_absolute_url }}">{{ x.tenant }}</a></td>
+        <td>{{ x.vlan.vid }}</td>
+        <td>{{ x.region.name }}</td>
+        <td class="right nowrap text-danger"><strong>{{ x.balance|money }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card flush">
+  <h2>Viloyatlar kesimida</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Viloyat</th><th class="right">Tumanlar</th><th class="right">Filiallar</th><th class="right">Qurilmalar</th><th class="right">IP manzillar</th></tr></thead>
+    <tbody>
+      {% for r in regions %}
+      <tr>
+        <td><a href="{{ r.get_absolute_url }}">{{ r.name }}</a></td>
+        <td class="right">{{ r.n_districts }}</td>
+        <td class="right">{{ r.n_branches }}</td>
+        <td class="right">{{ r.n_devices }}</td>
+        <td class="right">{% if r.n_ips %}<a href="{% url 'ipam:ip_list' %}?region={{ r.pk }}">{{ r.n_ips }}</a>{% else %}0{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% if unassigned_ips %}
+      <tr>
+        <td class="muted">Filialga biriktirilmagan</td><td></td><td></td><td></td>
+        <td class="right muted">{{ unassigned_ips }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card flush">
+    <h2>Oxirgi o'zgarishlar</h2>
+    {% if recent_ips %}
+    <div class="table-wrap">
+    <table>
+      <tbody>
+        {% for ip in recent_ips %}
+        <tr>
+          <td class="mono"><a href="{% url 'ipam:ip_update' ip.subnet_id ip.pk %}">{{ ip.address }}</a></td>
+          <td>{% if ip.device %}{{ ip.device.name }}{% else %}{{ ip.hostname|default:"—" }}{% endif %}<div class="location">{% if ip.branch %}{{ ip.branch.name }}, {{ ip.branch.district.region.name }}{% endif %}</div></td>
+          <td class="small muted nowrap">{{ ip.updated_at|date:"d.m.Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}<p class="empty">Hali IP manzil kiritilmagan.</p>{% endif %}
+  </div>
+
+  <div class="card flush">
+    <h2>To'lib qolayotgan subnetlar <span class="count">70%+</span></h2>
+    {% if busy_subnets %}
+    <div class="table-wrap">
+    <table>
+      <tbody>
+        {% for s in busy_subnets %}
+        <tr>
+          <td class="mono"><a href="{{ s.get_absolute_url }}">{{ s.network }}</a><div class="location">{{ s.name }}</div></td>
+          <td class="nowrap">
+            <span class="bar"><span style="width: {{ s.utilization|floatformat:0 }}%" class="{% if s.utilization >= 90 %}full{% else %}warn{% endif %}"></span></span>
+            <span class="small">{{ s.utilization }}%</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}<p class="empty">Hamma subnetlarda joy yetarli 👍</p>{% endif %}
+  </div>
+</div>
+{% endblock %}

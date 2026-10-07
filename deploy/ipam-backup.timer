@@ -1,0 +1,11 @@
+# /etc/systemd/system/ipam-backup.timer — har kuni soat 02:00 da
+[Unit]
+Description=IPAM zaxira nusxasi (har kuni)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target
