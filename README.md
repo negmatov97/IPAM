@@ -56,3 +56,4 @@ python manage.py test ipam
 - `ipam/views.py` — sahifalar
 - `ipam/templates/` — HTML shablonlar
 - `/admin/` — Django admin panel
+# IPAM
